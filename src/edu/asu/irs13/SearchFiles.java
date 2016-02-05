@@ -17,7 +17,9 @@ public class SearchFiles {
 		IndexReader r = IndexReader.open(FSDirectory.open(new File("index")));
 		int maximumDocs = r.maxDoc();
 		Date d;
+		
 		double[] normOfDocs = normOfDoc(r);
+		HashMap<String, Float> idf = computeIdf(r);
 		Scanner sc = new Scanner(System.in);
 		String str = "";
 		System.out.print("query> ");
@@ -26,11 +28,11 @@ public class SearchFiles {
 			d = new Date();
 			System.out.println(d.getTime());
 			String[] terms = str.split("\\s+");
-			DocumentSimillarity[] documetnSimillarity = new DocumentSimillarity[r.maxDoc()];
-			for (int i = 0; i< r.maxDoc(); i++){
+			DocumentSimillarity[] documetnSimillarity = new DocumentSimillarity[maximumDocs];
+			for (int i = 0; i< maximumDocs; i++){
 				documetnSimillarity[i] = new DocumentSimillarity();
 			}
-			HashMap<String, Integer> query = normOfQuery(terms);
+			HashMap<String, Integer> query = freqOfQuery(terms);
 			Iterator it = query.entrySet().iterator();
 			int value;
 			double normOfQuery = 0;
@@ -45,14 +47,15 @@ public class SearchFiles {
 			{
 				Term term = new Term("contents", word);
 				TermDocs tdocs = r.termDocs(term);
+				float idfValue = idf.get(word);
 				while(tdocs.next())
 				{
-					documetnSimillarity[tdocs.doc()].simillarity += query.get(word) * tdocs.freq();
+					documetnSimillarity[tdocs.doc()].simillarity += query.get(word) * tdocs.freq() * idfValue;
 					documetnSimillarity[tdocs.doc()].documentId = tdocs.doc();					
 				}
 			}
 			
-			for(int i = 0;i < r.maxDoc();i++){
+			for(int i = 0;i < maximumDocs;i++){
 				documetnSimillarity[i].simillarity = (documetnSimillarity[i].simillarity)/(normOfDocs[i] * normOfQuery);
 			}
 			d = new Date();
@@ -93,7 +96,7 @@ public class SearchFiles {
 
 	}
 	
-	private static HashMap<String, Integer> normOfQuery(String[] terms){
+	private static HashMap<String, Integer> freqOfQuery(String[] terms){
 		HashMap<String, Integer> query = new HashMap<String, Integer>();
 		Integer j = 0;
 		
@@ -107,5 +110,24 @@ public class SearchFiles {
 			}
 		}
 		return query;
+	}
+	
+	private static HashMap<String, Float> computeIdf(IndexReader r) throws Exception{
+		TermEnum t = r.terms();
+		HashMap<String, Float> idfMap =  new HashMap<String, Float>();
+		String minIdfTerm = null;
+		float min = 99999999;
+		float maxDoc = r.maxDoc();
+		float idf = 0;
+		while(t.next())
+		{
+			idf = maxDoc/t.docFreq();
+			if(min > idf){
+				min = idf;
+				minIdfTerm = t.term().text();
+			}				
+			idfMap.put(t.term().text(), (idf));
+		}
+		return idfMap;
 	}
 }
