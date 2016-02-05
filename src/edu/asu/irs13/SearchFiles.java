@@ -3,7 +3,10 @@ package edu.asu.irs13;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.*;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Scanner;
 import java.util.*;
 
@@ -12,13 +15,16 @@ public class SearchFiles {
 	public static void main(String[] args) throws Exception
 	{	
 		IndexReader r = IndexReader.open(FSDirectory.open(new File("index")));
-		
-		double[] normOfDocs = normOfDoc(r); 
+		int maximumDocs = r.maxDoc();
+		Date d;
+		double[] normOfDocs = normOfDoc(r);
 		Scanner sc = new Scanner(System.in);
 		String str = "";
 		System.out.print("query> ");
 		while(!(str = sc.nextLine()).equals("quit"))
 		{
+			d = new Date();
+			System.out.println(d.getTime());
 			String[] terms = str.split("\\s+");
 			DocumentSimillarity[] documetnSimillarity = new DocumentSimillarity[r.maxDoc()];
 			for (int i = 0; i< r.maxDoc(); i++){
@@ -49,12 +55,13 @@ public class SearchFiles {
 			for(int i = 0;i < r.maxDoc();i++){
 				documetnSimillarity[i].simillarity = (documetnSimillarity[i].simillarity)/(normOfDocs[i] * normOfQuery);
 			}
-			
+			d = new Date();
+			System.out.println(d.getTime());			
 			DocumentSimillarity.quickSort(documetnSimillarity, 0, documetnSimillarity.length - 1);
-			
+			d = new Date();
+			System.out.println(d.getTime());
 			for(int i = 0; i < 10 ;i++){
-				String d_url = r.document(documetnSimillarity[i].documentId).getFieldable("path").stringValue().replace("%%", "/");
-				System.out.println("["+documetnSimillarity[i].documentId+"] " + d_url);
+				System.out.println("["+documetnSimillarity[i].documentId+"]");
 			}
 			
 			System.out.print("query> ");
