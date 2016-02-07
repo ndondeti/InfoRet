@@ -18,7 +18,10 @@ public class SearchFiles {
 		int maximumDocs = r.maxDoc();
 		Date d;
 		
+		//To compute the 2-Norm of all documents
 		double[] normOfDocs = normOfDoc(r);
+		
+		//To compute the IDF value of all terms
 		HashMap<String, Float> idf = computeIdf(r);
 		Scanner sc = new Scanner(System.in);
 		String str = "";
@@ -28,9 +31,9 @@ public class SearchFiles {
 			d = new Date();
 			System.out.println(d.getTime());
 			String[] terms = str.split("\\s+");
-			DocumentSimillarity[] documetnSimillarity = new DocumentSimillarity[maximumDocs];
+			DocumentSimilarity[] documentSimilarity = new DocumentSimilarity[maximumDocs];
 			for (int i = 0; i< maximumDocs; i++){
-				documetnSimillarity[i] = new DocumentSimillarity();
+				documentSimilarity[i] = new DocumentSimilarity();
 			}
 			HashMap<String, Integer> query = freqOfQuery(terms);
 			Iterator it = query.entrySet().iterator();
@@ -50,21 +53,21 @@ public class SearchFiles {
 				float idfValue = idf.get(word);
 				while(tdocs.next())
 				{
-					documetnSimillarity[tdocs.doc()].simillarity += query.get(word) * tdocs.freq() * idfValue;
-					documetnSimillarity[tdocs.doc()].documentId = tdocs.doc();					
+					documentSimilarity[tdocs.doc()].simillarity += query.get(word) * tdocs.freq() * idfValue;
+					documentSimilarity[tdocs.doc()].documentId = tdocs.doc();					
 				}
 			}
 			
 			for(int i = 0;i < maximumDocs;i++){
-				documetnSimillarity[i].simillarity = (documetnSimillarity[i].simillarity)/(normOfDocs[i] * normOfQuery);
+				documentSimilarity[i].simillarity = (documentSimilarity[i].simillarity)/(normOfDocs[i] * normOfQuery);
 			}
 			d = new Date();
 			System.out.println(d.getTime());			
-			DocumentSimillarity.quickSort(documetnSimillarity, 0, documetnSimillarity.length - 1);
+			DocumentSimilarity.quickSort(documentSimilarity, 0, documentSimilarity.length - 1);
 			d = new Date();
 			System.out.println(d.getTime());
 			for(int i = 0; i < 10 ;i++){
-				System.out.println("["+documetnSimillarity[i].documentId+"]");
+				System.out.println("["+documentSimilarity[i].simillarity+"]");
 			}
 			
 			System.out.print("query> ");
