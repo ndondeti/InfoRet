@@ -23,6 +23,7 @@ public class SearchFiles {
 		
 		//To compute the IDF value of all terms
 		HashMap<String, Float> idf = computeIdf(r);
+		
 		Scanner sc = new Scanner(System.in);
 		String str = "";
 		System.out.print("query> ");
@@ -31,10 +32,12 @@ public class SearchFiles {
 			d = new Date();
 			System.out.println(d.getTime());
 			String[] terms = str.split("\\s+");
+			
 			DocumentSimilarity[] documentSimilarity = new DocumentSimilarity[maximumDocs];
 			for (int i = 0; i< maximumDocs; i++){
 				documentSimilarity[i] = new DocumentSimilarity();
 			}
+			
 			HashMap<String, Integer> query = freqOfQuery(terms);
 			Iterator it = query.entrySet().iterator();
 			int value;
@@ -44,8 +47,10 @@ public class SearchFiles {
 				value = (Integer)pair.getValue(); 
 				normOfQuery += value*value;
 			}
+			//The 2-Norm of the query string
 			normOfQuery = Math.sqrt(normOfQuery);			
 			
+			//Computing the cosine similarity between the document and the query
 			for(String word : terms)
 			{
 				Term term = new Term("contents", word);
@@ -61,11 +66,11 @@ public class SearchFiles {
 			for(int i = 0;i < maximumDocs;i++){
 				documentSimilarity[i].simillarity = (documentSimilarity[i].simillarity)/(normOfDocs[i] * normOfQuery);
 			}
-			d = new Date();
-			System.out.println(d.getTime());			
-			DocumentSimilarity.quickSort(documentSimilarity, 0, documentSimilarity.length - 1);
-			d = new Date();
+		
 			System.out.println(d.getTime());
+			
+			//Ranking the documents
+			DocumentSimilarity.quickSort(documentSimilarity, 0, documentSimilarity.length - 1);
 			for(int i = 0; i < 10 ;i++){
 				System.out.println("["+documentSimilarity[i].simillarity+"]");
 			}
