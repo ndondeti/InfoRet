@@ -10,19 +10,19 @@ import java.io.OutputStreamWriter;
 import java.util.Scanner;
 import java.util.*;
 
-public class SearchFiles {
+import java.util.ArrayList;
+
+public class SearchFilesTF {
 	
 	public static void main(String[] args) throws Exception
 	{	
 		IndexReader r = IndexReader.open(FSDirectory.open(new File("index")));
 		int maximumDocs = r.maxDoc();
 		Date d;
+		ArrayList<DocumentSimilarity> restrictedDoc = new ArrayList<DocumentSimilarity>(); 
 		
 		//To compute the 2-Norm of all documents
 		double[] normOfDocs = normOfDoc(r);
-		
-		//To compute the IDF value of all terms
-		HashMap<String, Float> idf = computeIdf(r);
 		
 		Scanner sc = new Scanner(System.in);
 		String str = "";
@@ -55,24 +55,27 @@ public class SearchFiles {
 			{
 				Term term = new Term("contents", word);
 				TermDocs tdocs = r.termDocs(term);
-				float idfValue = idf.get(word);
 				while(tdocs.next())
 				{
-					documentSimilarity[tdocs.doc()].simillarity += query.get(word) * tdocs.freq() * idfValue;
+					documentSimilarity[tdocs.doc()].simillarity += query.get(word) * tdocs.freq();
 					documentSimilarity[tdocs.doc()].documentId = tdocs.doc();					
 				}
 			}
 			
 			for(int i = 0;i < maximumDocs;i++){
-				documentSimilarity[i].simillarity = (documentSimilarity[i].simillarity)/(normOfDocs[i] * normOfQuery);
+				if(documentSimilarity[i].simillarity != 0){
+					documentSimilarity[i].simillarity = (documentSimilarity[i].simillarity)/(normOfDocs[i] * normOfQuery);
+					restrictedDoc.add(documentSimilarity[i]);
+				}				
 			}
 		
 			System.out.println(d.getTime());
 			
 			//Ranking the documents
-			DocumentSimilarity.quickSort(documentSimilarity, 0, documentSimilarity.length - 1);
+			DocumentSimilarity.quickSort(restrictedDoc, 0, restrictedDoc.size() - 1);
 			for(int i = 0; i < 10 ;i++){
-				System.out.println("["+documentSimilarity[i].simillarity+"]");
+				String d_url = r.document(restrictedDoc.get(i).documentId).getFieldable("path").stringValue().replace("%%", "/");
+				System.out.println("["+restrictedDoc.get(i).documentId+"] " + d_url);
 			}
 			
 			System.out.print("query> ");
@@ -88,6 +91,7 @@ public class SearchFiles {
 		TermEnum t = r.terms();
 		Term termsInDoc;
 		TermDocs termDocs;
+		float maxDoc = r.maxDoc();
 		while(t.next())
 		{
 			termsInDoc = t.term();
@@ -97,7 +101,7 @@ public class SearchFiles {
 			}
 		}
 		
-		for(int i = 0; i < r.maxDoc(); i++){
+		for(int i = 0; i < maxDoc; i++){
 			normOfDoc[i] = Math.sqrt(normOfDoc[i]);
 		}
 		return normOfDoc;
@@ -118,24 +122,5 @@ public class SearchFiles {
 			}
 		}
 		return query;
-	}
-	
-	private static HashMap<String, Float> computeIdf(IndexReader r) throws Exception{
-		TermEnum t = r.terms();
-		HashMap<String, Float> idfMap =  new HashMap<String, Float>();
-		String minIdfTerm = null;
-		float min = 99999999;
-		float maxDoc = r.maxDoc();
-		float idf = 0;
-		while(t.next())
-		{
-			idf = maxDoc/t.docFreq();
-			if(min > idf){
-				min = idf;
-				minIdfTerm = t.term().text();
-			}				
-			idfMap.put(t.term().text(), (idf));
-		}
-		return idfMap;
 	}
 }

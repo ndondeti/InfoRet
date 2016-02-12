@@ -1,5 +1,7 @@
 package edu.asu.irs13;
 
+import java.util.ArrayList;
+
 public class DocumentSimilarity{
 	public double simillarity;
 	public int documentId;
@@ -14,21 +16,21 @@ public class DocumentSimilarity{
 		documentId = id;
 	}
 	
-	private static int partition(DocumentSimilarity arr[], int left, int right)
+	private static int partition(ArrayList<DocumentSimilarity> arr, int left, int right)
 	{
 	      int i = left, j = right;
 	      DocumentSimilarity tmp;
-	      double pivot = arr[(left + right) / 2].simillarity;
+	      double pivot = arr.get((left + right) / 2).simillarity;
 	     
 	      while (i <= j) {
-	            while (arr[i].simillarity > pivot)
+	            while (arr.get(i).simillarity > pivot)
 	                  i++;
-	            while (arr[j].simillarity < pivot)
+	            while (arr.get(j).simillarity < pivot)
 	                  j--;
 	            if (i <= j) {
-	                  tmp = arr[i];
-	                  arr[i] = arr[j];
-	                  arr[j] = tmp;
+	                  tmp = arr.get(i);
+	                  arr.set(i, arr.get(j));
+	                  arr.set(j, tmp) ;
 	                  i++;
 	                  j--;
 	            }
@@ -37,7 +39,7 @@ public class DocumentSimilarity{
 	      return i;
 	}
 	 
-	public static void quickSort(DocumentSimilarity arr[], int left, int right) {
+	public static void quickSort(ArrayList<DocumentSimilarity> arr, int left, int right) {
 	      int index = partition(arr, left, right);
 	      if (left < index - 1)
 	            quickSort(arr, left, index - 1);
