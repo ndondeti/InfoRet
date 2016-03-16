@@ -110,15 +110,18 @@ public class SearchFilesIDF {
 			}
 			i = 0;
 			for (Integer doc : nodes) {
-				i++;
+				
 				int[] links = linkAnalysis.getLinks(doc);
 				int[] citations = linkAnalysis.getCitations(doc);
 				for (int link : links) {
-					adj[i][index.get(link)] = 1;
+					if(nodes.contains(link))
+						adj[i][index.get(link)] = 1;
 				}
 				for (int citation : citations) {
-					adj[index.get(citation)][i] = 1;
+					if(nodes.contains(citation))
+						adj[index.get(citation)][i] = 1;
 				}
+				i++;
 			}
 			
 			//Computing the hubs and authorities score over 30 iterations
@@ -148,6 +151,7 @@ public class SearchFilesIDF {
 					hubs[j] = hubs[j]/hubsNorm;
 				}
 			}
+			List nodesInArray = new ArrayList<Integer>(nodes);
 			System.out.println("The top 10 documents with hub and authorites are:");
 			for(i = 0; i < 10; i++){
 				double authMax = 0;
@@ -160,14 +164,13 @@ public class SearchFilesIDF {
 						authMaxIndex = j;
 					}
 					if(hubs[j] >= hubsMax ){
-						hubsMax = authorities[j];
+						hubsMax = hubs[j];
 						hubMaxIndex = j;
 					}
 				}
 				authorities[authMaxIndex] = 0;
 				hubs[hubMaxIndex] = 0;
-				Integer[] nodesInArray = (Integer[])nodes.toArray();
-				System.out.print(nodesInArray[hubMaxIndex] + "\t\t" + nodesInArray[authMaxIndex] + "\n");
+				System.out.print(nodesInArray.get(hubMaxIndex) + "\t\t" + nodesInArray.get(authMaxIndex) + "\n");
 			}
 			
 			System.out.print("query> ");
