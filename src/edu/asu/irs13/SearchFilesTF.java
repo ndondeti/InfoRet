@@ -3,14 +3,9 @@ package edu.asu.irs13;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.*;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.util.Scanner;
 import java.util.*;
-
-import java.util.ArrayList;
+import java.util.Map.Entry;
 
 public class SearchFilesTF {
 	
@@ -39,7 +34,7 @@ public class SearchFilesTF {
 			}
 			
 			HashMap<String, Integer> query = freqOfQuery(terms);
-			Iterator it = query.entrySet().iterator();
+			Iterator<Entry<String, Integer>> it = query.entrySet().iterator();
 			int value;
 			double normOfQuery = 0;
 			while (it.hasNext()) {

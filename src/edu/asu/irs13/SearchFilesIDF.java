@@ -4,10 +4,8 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.store.*;
 
 import java.io.File;
-import java.util.Scanner;
 import java.util.*;
-
-import java.util.ArrayList;
+import java.util.Map.Entry;
 
 public class SearchFilesIDF {
 	
@@ -38,7 +36,7 @@ public class SearchFilesIDF {
 			}
 			
 			HashMap<String, Integer> query = freqOfQuery(terms);
-			Iterator it = query.entrySet().iterator();
+			Iterator<Entry<String, Integer>> it = query.entrySet().iterator();
 			int value;
 			double normOfQuery = 0;
 			while (it.hasNext()) {
