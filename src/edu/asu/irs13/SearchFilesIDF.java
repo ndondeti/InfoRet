@@ -28,7 +28,7 @@ public class SearchFilesIDF {
 		String str = "";
 		System.out.print("query> ");
 		while (!(str = sc.nextLine()).equals("quit")) {
-			d = new Date();
+			
 			//System.out.println(d.getTime());
 			String[] terms = str.split("\\s+");
 
@@ -74,6 +74,8 @@ public class SearchFilesIDF {
 			// Ranking the documents
 			DocumentSimilarity.quickSort(restrictedDoc, 0, restrictedDoc.size() - 1);
 			ArrayList<Integer> authoritiesAndHubsDoc = new ArrayList<Integer>();
+			d = new Date();
+			System.out.println(d.getTime());
 			for (int i = 0; i < 10; i++) {
 				// String d_url =
 				// r.document(restrictedDoc.get(i).documentId).getFieldable("path").stringValue().replace("%%",
@@ -172,7 +174,8 @@ public class SearchFilesIDF {
 				hubs[hubMaxIndex] = 0;
 				System.out.print(nodesInArray.get(hubMaxIndex) + "\t\t" + nodesInArray.get(authMaxIndex) + "\n");
 			}
-			
+			d = new Date();
+			System.out.println(d.getTime());
 			System.out.print("query> ");
 
 		}
