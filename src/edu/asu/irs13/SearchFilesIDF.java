@@ -69,23 +69,21 @@ public class SearchFilesIDF {
 				}
 			}
 
-			//System.out.println(d.getTime());
-
 			// Ranking the documents
 			DocumentSimilarity.quickSort(restrictedDoc, 0, restrictedDoc.size() - 1);
 			ArrayList<Integer> authoritiesAndHubsDoc = new ArrayList<Integer>();
 			d = new Date();
 			System.out.println(d.getTime());
+			
+			//Retreving the top 10 documents
 			for (int i = 0; i < 10; i++) {
-				// String d_url =
-				// r.document(restrictedDoc.get(i).documentId).getFieldable("path").stringValue().replace("%%",
-				// "/");
-				// System.out.println("["+restrictedDoc.get(i).documentId+"] " +
-				// d_url);
 				authoritiesAndHubsDoc.add(restrictedDoc.get(i).documentId);
 			}
+			
 			HashSet<Integer> nodes = new HashSet<Integer>();
 			HashMap<Integer, Integer> index = new HashMap<>();
+			
+			//Finding out the nodes linked to the top 10 documents
 			for (Integer doc : authoritiesAndHubsDoc) {
 				int[] links = linkAnalysis.getLinks(doc);
 				int[] citations = linkAnalysis.getCitations(doc);
@@ -103,27 +101,31 @@ public class SearchFilesIDF {
 			double[] authorities = new double[sizeOfBaseSet];
 			double[] hubs = new double[sizeOfBaseSet];
 
+			//Initially authorities value is filled with 0 and hubs value is filled with 1.
 			Arrays.fill(authorities, 0);
 			Arrays.fill(hubs, 1);
 			
+			//Storing the idex of each document
 			for(Integer doc : nodes){
 				index.put(doc, i);
 				i++;
 			}
+			
 			i = 0;
+			
+			//Constructing the adjacency matrix for the base set. While getting links and citations
+			//we are ignoring all the nodes that are not part of the base set.
 			for (Integer doc : nodes) {
-				
 				int[] links = linkAnalysis.getLinks(doc);
 				int[] citations = linkAnalysis.getCitations(doc);
 				for (int link : links) {
 					if(nodes.contains(link))
-						adj[i][index.get(link)] = 1;
+						adj[index.get(doc)][index.get(link)] = 1;
 				}
 				for (int citation : citations) {
 					if(nodes.contains(citation))
-						adj[index.get(citation)][i] = 1;
+						adj[index.get(citation)][index.get(doc)] = 1;
 				}
-				i++;
 			}
 			
 			//Computing the hubs and authorities score over 30 iterations
@@ -133,7 +135,7 @@ public class SearchFilesIDF {
 				for (i = 0; i < sizeOfBaseSet; i++) {
 					for (int j = 0; j < sizeOfBaseSet; j++) {
 						if (adj[j][i] == 1){
-							authorities[i] += hubs[i];
+							authorities[i] += hubs[j];
 							authoritiesNorm += authorities[i] * authorities[i];
 						}
 					}
@@ -141,19 +143,21 @@ public class SearchFilesIDF {
 				for (i = 0; i < sizeOfBaseSet; i++) {
 					for (int j = 0; j < sizeOfBaseSet; j++) {
 						if (adj[i][j] == 1){
-							hubs[i] += authorities[i];
+							hubs[i] += authorities[j];
 							hubsNorm += hubs[i]*hubs[i];
 						}
 					}
 				}
 				authoritiesNorm = Math.sqrt(authoritiesNorm);
 				hubsNorm = Math.sqrt(hubsNorm);
+				//Normalizing all the hubs and authorities score by L2-Norm
 				for(int j = 0;j < sizeOfBaseSet; j++){
 					authorities[j] = authorities[j]/authoritiesNorm;
 					hubs[j] = hubs[j]/hubsNorm;
 				}
 			}
 			List nodesInArray = new ArrayList<Integer>(nodes);
+			//Printing the top 10 documents with highest authorities and hubs score
 			System.out.println("The top 10 documents with hub and authorites are:");
 			for(i = 0; i < 10; i++){
 				double authMax = 0;
