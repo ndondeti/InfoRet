@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class SearchFilesIDF {
+public class PageRank {
 
 	public static HashMap<String, Float> idf = new HashMap<String, Float>();
 
@@ -19,9 +19,17 @@ public class SearchFilesIDF {
 		int maximumDocs = r.maxDoc();
 		LinkAnalysis.numDocs = maximumDocs;
 		LinkAnalysis linkAnalysis = new LinkAnalysis();
+		Date d = new Date();
+		System.out.println(d.getTime());
 		double[] pageRank = pageRank(linkAnalysis);
+		d = new Date();
+		System.out.println(d.getTime());
+		//int maxPage = maxPageRank(pageRank);
+		//String max_page_url = r.document(maxPage).getFieldable("path").stringValue()
+		//		.replace("%%", "/");
+		//System.out.println(max_page_url);
 		double w = 0.4;
-		Date d;
+		
 		ArrayList<DocumentSimilarity> restrictedDoc = new ArrayList<DocumentSimilarity>();
 
 		// To compute the 2-Norm of all documents
@@ -90,7 +98,17 @@ public class SearchFilesIDF {
 		}
 		sc.close();
 	}
-
+	public static int maxPageRank(double[] pageRank){
+		int maxIndex = 0;
+		for(int i = 0; i < pageRank.length; i++){
+			if(pageRank[i] >= pageRank[maxIndex]){
+				maxIndex = i;
+			}
+		}
+		System.out.println(maxIndex);
+		return maxIndex;
+	}
+	
 	private static double[] normOfDoc(IndexReader r) throws Exception {
 
 		double[] normOfDoc = new double[r.maxDoc()];
@@ -135,10 +153,9 @@ public class SearchFilesIDF {
 	private static double[] pageRank(LinkAnalysis linkAnalysis) {
 
 		double[] pageRank = new double[LinkAnalysis.numDocs];
-		double[] newPageRank = new double[LinkAnalysis.numDocs];
 		double[] probailities = new double[LinkAnalysis.numDocs];
-		double k = 1 / LinkAnalysis.numDocs;
-		float c = (float) 0.8;
+		double k = 1/((double)LinkAnalysis.numDocs);//0.00003991378622 //For some reason 1/LinkAnalysis.numDocs;
+		float c = (float) 0;
 		int convergenceIteration = 0;
 		Arrays.fill(pageRank, k);
 
@@ -146,8 +163,9 @@ public class SearchFilesIDF {
 			probailities[i] = linkAnalysis.getLinks(i).length;
 		}
 		
-		for (int iteration = 0; iteration < 100; iteration++) {
-			double normalizer = 0;
+		for (int iteration = 0; iteration < 10; iteration++) {
+			double[] newPageRank = new double[LinkAnalysis.numDocs];
+			double normalizer = 1;
 			for (int i = 0; i < LinkAnalysis.numDocs; i++) {
 				double[] mstar = new double[LinkAnalysis.numDocs];
 
@@ -173,7 +191,7 @@ public class SearchFilesIDF {
 				convergenceIteration = iteration;
 				break;
 			}
-			pageRank = newPageRank;
+			pageRank = newPageRank.clone();
 		}
 		return pageRank;
 	}
