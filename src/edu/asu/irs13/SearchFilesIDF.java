@@ -3,6 +3,8 @@ package edu.asu.irs13;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.*;
 
+import javafx.scene.control.ProgressBarBuilder;
+
 import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
@@ -12,12 +14,13 @@ public class SearchFilesIDF {
 	public static HashMap<String, Float> idf = new HashMap<String, Float>();
 
 	public static void main(String[] args) throws Exception {
-		
 
 		IndexReader r = IndexReader.open(FSDirectory.open(new File("index")));
 		int maximumDocs = r.maxDoc();
 		LinkAnalysis.numDocs = maximumDocs;
 		LinkAnalysis linkAnalysis = new LinkAnalysis();
+		double[] pageRank = pageRank(linkAnalysis);
+		double w = 0.4;
 		Date d;
 		ArrayList<DocumentSimilarity> restrictedDoc = new ArrayList<DocumentSimilarity>();
 
@@ -28,8 +31,8 @@ public class SearchFilesIDF {
 		String str = "";
 		System.out.print("query> ");
 		while (!(str = sc.nextLine()).equals("quit")) {
-			
-			//System.out.println(d.getTime());
+
+			// System.out.println(d.getTime());
 			String[] terms = str.split("\\s+");
 
 			DocumentSimilarity[] documentSimilarity = new DocumentSimilarity[maximumDocs];
@@ -65,11 +68,10 @@ public class SearchFilesIDF {
 				if (documentSimilarity[i].simillarity != 0) {
 					documentSimilarity[i].simillarity = (documentSimilarity[i].simillarity)
 							/ (normOfDocs[i] * normOfQuery);
+					documentSimilarity[i].simillarity = w*(pageRank[i]) + (1-w)*documentSimilarity[i].simillarity;
 					restrictedDoc.add(documentSimilarity[i]);
 				}
 			}
-
-			//System.out.println(d.getTime());
 
 			// Ranking the documents
 			DocumentSimilarity.quickSort(restrictedDoc, 0, restrictedDoc.size() - 1);
@@ -77,105 +79,12 @@ public class SearchFilesIDF {
 			d = new Date();
 			System.out.println(d.getTime());
 			for (int i = 0; i < 10; i++) {
-				// String d_url =
-				// r.document(restrictedDoc.get(i).documentId).getFieldable("path").stringValue().replace("%%",
-				// "/");
-				// System.out.println("["+restrictedDoc.get(i).documentId+"] " +
-				// d_url);
+				String d_url = r.document(restrictedDoc.get(i).documentId).getFieldable("path").stringValue()
+						.replace("%%", "/");
+				System.out.println("[" + restrictedDoc.get(i).documentId + "] " + d_url);
 				authoritiesAndHubsDoc.add(restrictedDoc.get(i).documentId);
 			}
-			HashSet<Integer> nodes = new HashSet<Integer>();
-			HashMap<Integer, Integer> index = new HashMap<>();
-			for (Integer doc : authoritiesAndHubsDoc) {
-				int[] links = linkAnalysis.getLinks(doc);
-				int[] citations = linkAnalysis.getCitations(doc);
-				for (int link : links) {
-					nodes.add(link);
-				}
-				for (int citation : citations) {
-					nodes.add(citation);
-				}
-			}
 
-			int sizeOfBaseSet = nodes.size();
-			int i = 0;
-			int[][] adj = new int[sizeOfBaseSet][sizeOfBaseSet];
-			double[] authorities = new double[sizeOfBaseSet];
-			double[] hubs = new double[sizeOfBaseSet];
-
-			Arrays.fill(authorities, 0);
-			Arrays.fill(hubs, 1);
-			
-			for(Integer doc : nodes){
-				index.put(doc, i);
-				i++;
-			}
-			i = 0;
-			for (Integer doc : nodes) {
-				
-				int[] links = linkAnalysis.getLinks(doc);
-				int[] citations = linkAnalysis.getCitations(doc);
-				for (int link : links) {
-					if(nodes.contains(link))
-						adj[i][index.get(link)] = 1;
-				}
-				for (int citation : citations) {
-					if(nodes.contains(citation))
-						adj[index.get(citation)][i] = 1;
-				}
-				i++;
-			}
-			
-			//Computing the hubs and authorities score over 30 iterations
-			for (int k = 0; k < 30; k++) {
-				double authoritiesNorm = 0;
-				double hubsNorm = 0;
-				for (i = 0; i < sizeOfBaseSet; i++) {
-					for (int j = 0; j < sizeOfBaseSet; j++) {
-						if (adj[j][i] == 1){
-							authorities[i] += hubs[i];
-							authoritiesNorm += authorities[i] * authorities[i];
-						}
-					}
-				}
-				for (i = 0; i < sizeOfBaseSet; i++) {
-					for (int j = 0; j < sizeOfBaseSet; j++) {
-						if (adj[i][j] == 1){
-							hubs[i] += authorities[i];
-							hubsNorm += hubs[i]*hubs[i];
-						}
-					}
-				}
-				authoritiesNorm = Math.sqrt(authoritiesNorm);
-				hubsNorm = Math.sqrt(hubsNorm);
-				for(int j = 0;j < sizeOfBaseSet; j++){
-					authorities[j] = authorities[j]/authoritiesNorm;
-					hubs[j] = hubs[j]/hubsNorm;
-				}
-			}
-			List nodesInArray = new ArrayList<Integer>(nodes);
-			System.out.println("The top 10 documents with hub and authorites are:");
-			for(i = 0; i < 10; i++){
-				double authMax = 0;
-				double hubsMax = 0;
-				int authMaxIndex = 0;
-				int hubMaxIndex = 0;
-				for(int j =0; j < sizeOfBaseSet; j++){
-					if(authorities[j] >= authMax ){
-						authMax = authorities[j];
-						authMaxIndex = j;
-					}
-					if(hubs[j] >= hubsMax ){
-						hubsMax = hubs[j];
-						hubMaxIndex = j;
-					}
-				}
-				authorities[authMaxIndex] = 0;
-				hubs[hubMaxIndex] = 0;
-				System.out.print(nodesInArray.get(hubMaxIndex) + "\t\t" + nodesInArray.get(authMaxIndex) + "\n");
-			}
-			d = new Date();
-			System.out.println(d.getTime());
 			System.out.print("query> ");
 
 		}
@@ -221,5 +130,51 @@ public class SearchFilesIDF {
 			}
 		}
 		return query;
+	}
+
+	private static double[] pageRank(LinkAnalysis linkAnalysis) {
+
+		double[] pageRank = new double[LinkAnalysis.numDocs];
+		double[] newPageRank = new double[LinkAnalysis.numDocs];
+		double[] probailities = new double[LinkAnalysis.numDocs];
+		double k = 1 / LinkAnalysis.numDocs;
+		float c = (float) 0.8;
+		int convergenceIteration = 0;
+		Arrays.fill(pageRank, k);
+
+		for (int i = 0; i < LinkAnalysis.numDocs; i++) {
+			probailities[i] = linkAnalysis.getLinks(i).length;
+		}
+		
+		for (int iteration = 0; iteration < 100; iteration++) {
+			double normalizer = 0;
+			for (int i = 0; i < LinkAnalysis.numDocs; i++) {
+				double[] mstar = new double[LinkAnalysis.numDocs];
+
+				int[] citations = linkAnalysis.getCitations(i);
+				if (citations == null || citations.length == 0) {
+					Arrays.fill(mstar, k);
+				} else {
+					for (int citation : citations) {
+						mstar[citation] = c * (1 / probailities[citation]) + (1 - c) * k;
+					}
+				}
+				double rankOfDoc = 0;
+				for (int j = 0; j < LinkAnalysis.numDocs; j++) {
+					rankOfDoc += mstar[j] * pageRank[j];
+				}
+				newPageRank[i] = rankOfDoc;
+				normalizer += rankOfDoc;
+			}
+			for(int i = 0; i < LinkAnalysis.numDocs; i++){
+				newPageRank[i] = newPageRank[i]/normalizer;
+			}
+			if(Arrays.equals(pageRank, newPageRank)){
+				convergenceIteration = iteration;
+				break;
+			}
+			pageRank = newPageRank;
+		}
+		return pageRank;
 	}
 }

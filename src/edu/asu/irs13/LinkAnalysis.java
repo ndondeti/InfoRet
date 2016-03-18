@@ -93,7 +93,7 @@ public class LinkAnalysis {
 		
 		// Find all the document numbers that doc #3 points to
 		System.out.print("Document number 3 points to: ");
-		int[] links3 = l.getLinks(3);
+		int[] links3 = l.getLinks(0);
 		for(int pb:links3)
 		{
 			System.out.print(pb + ",");
@@ -101,7 +101,7 @@ public class LinkAnalysis {
 		
 		// Find all the document numbers that point to doc #3
 		System.out.print("\nDocument number 3 is pointed by: ");
-		int[] cit3 = l.getCitations(3);
+		int[] cit3 = l.getCitations(0);
 		for(int pb:cit3)
 		{
 			System.out.print(pb + ",");
