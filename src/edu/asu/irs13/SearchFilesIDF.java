@@ -76,7 +76,7 @@ public class SearchFilesIDF {
 			System.out.println(d.getTime());
 			
 			//Retreving the top 10 documents
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 30; i++) {
 				authoritiesAndHubsDoc.add(restrictedDoc.get(i).documentId);
 			}
 			
@@ -94,7 +94,8 @@ public class SearchFilesIDF {
 					nodes.add(citation);
 				}
 			}
-
+			d = new Date();
+			System.out.println(d.getTime());
 			int sizeOfBaseSet = nodes.size();
 			int i = 0;
 			int[][] adj = new int[sizeOfBaseSet][sizeOfBaseSet];
@@ -127,7 +128,8 @@ public class SearchFilesIDF {
 						adj[index.get(citation)][index.get(doc)] = 1;
 				}
 			}
-			
+			d = new Date();
+			System.out.println(d.getTime());
 			//Computing the hubs and authorities score over 30 iterations
 			for (int k = 0; k < 30; k++) {
 				double authoritiesNorm = 0;
@@ -156,6 +158,8 @@ public class SearchFilesIDF {
 					hubs[j] = hubs[j]/hubsNorm;
 				}
 			}
+			d = new Date();
+			System.out.println(d.getTime());
 			List nodesInArray = new ArrayList<Integer>(nodes);
 			//Printing the top 10 documents with highest authorities and hubs score
 			System.out.println("The top 10 documents with hub and authorites are:");
